@@ -1,0 +1,11 @@
+@import 'tailwindcss';
+
+/* Rebrand in one place: change these and every bg-brand / text-brand follows. */
+@theme {
+  --color-brand: #4f46e5;
+  --color-brand-dark: #4338ca;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}

@@ -1,0 +1,16 @@
+{
+  "name": "hackathon-starter",
+  "private": true,
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "node scripts/py.mjs -m uvicorn app.main:app --reload --port 8000",
+    "dev:web": "npm --prefix frontend run dev",
+    "test": "node scripts/py.mjs -m pytest -q",
+    "build": "npm --prefix frontend run build",
+    "start": "node scripts/py.mjs -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
