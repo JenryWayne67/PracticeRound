@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import settings
 from .db import init_db
-from .routers import ai, auth, items, uploads, ws
+from .routers import ai, auth, items, notes, uploads, ws
 
 FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 
@@ -34,6 +34,7 @@ app.add_middleware(
 api = APIRouter(prefix="/api")
 api.include_router(auth.router)
 api.include_router(items.router)
+api.include_router(notes.router)
 api.include_router(ai.router)
 api.include_router(uploads.router)
 api.include_router(ws.router)

@@ -11,6 +11,17 @@ export interface AuthResponse {
   user: User
 }
 
+export interface Note {
+  id: number
+  title: string
+  body: string
+  category: string
+  place: string
+  author_id: number
+  author_name: string
+  created_at: string
+}
+
 export interface Item {
   id: number
   title: string

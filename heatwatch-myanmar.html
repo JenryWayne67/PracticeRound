@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HeatWatch Myanmar – Detecting heat-wave trends with NASA data</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;600;700&display=swap">
+<style>
+:root{
+  --bg:#fff7ef; --surface:#ffffff; --surface-2:#fff1e3;
+  --ink:#2b1a12; --ink-2:#5f4a3e; --muted:#8a7366; --line:#f0dccb;
+  --accent:#d9480f; --accent-dark:#a4320a; --accent-soft:#f4a261;
+  --green:#2e9e5b; --amber:#f2b632; --red:#d7301f;
+  --temp:#d9480f; --soil:#2b6cb0; --veg:#2e8b57; --flower:#6b3fa0;
+  --radius:14px; --shadow:0 1px 2px rgba(90,40,10,.06),0 6px 20px rgba(90,40,10,.07);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Myanmar","Myanmar Text",sans-serif}
+button,input,select{font:inherit;color:inherit}
+h1,h2,h3,p{margin:0}
+
+header.top{background:linear-gradient(120deg,#8f2a08 0%,#d9480f 55%,#f08c2e 100%);color:#fff;padding:18px 20px}
+.top-inner{max-width:1320px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.top h1{font-size:24px;letter-spacing:-.01em}
+.top p{opacity:.92}
+.top .titles{flex:1 1 320px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:#fff;color:var(--accent-dark);font-weight:700;font-size:13px;padding:6px 12px;border-radius:999px}
+.badge::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+
+main{max-width:1320px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.pad{padding:16px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.sub{color:var(--muted);font-size:13px}
+
+/* map */
+.map-card{position:sticky;top:12px;overflow:hidden}
+#map{height:470px;background:#f3e6d8}
+.leaflet-container{font:inherit}
+.mk-wrap{background:none;border:0}
+.mk{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45);cursor:pointer}
+.mk.sel{outline:3px solid var(--ink);outline-offset:2px}
+.mk-lab{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:12px;font-weight:700;color:var(--ink);background:rgba(255,255,255,.9);padding:1px 7px;border-radius:10px;box-shadow:0 1px 2px rgba(0,0,0,.2);pointer-events:none}
+.mk-lab.right{left:42px}.mk-lab.left{right:42px}
+.map-ctl{padding:14px 16px 16px;border-top:1px solid var(--line)}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;padding:6px 14px;border-radius:999px;cursor:pointer;font-weight:600;font-size:13px;color:var(--ink-2)}
+.seg button[aria-pressed="true"],.seg button[aria-selected="true"]{background:var(--accent);color:#fff}
+.ctl-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between}
+.year-row{display:flex;align-items:center;gap:10px;margin-top:12px}
+.year-row output{font-size:22px;font-weight:800;min-width:3.2em;text-align:right;font-variant-numeric:tabular-nums}
+#yearSlider{flex:1;accent-color:var(--accent);height:28px}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:14px}
+.icon-btn:hover{background:var(--surface-2)}
+.legend{margin-top:12px}
+.legend-bar{height:10px;border-radius:6px;background:linear-gradient(90deg,var(--green),var(--amber),var(--red))}
+.legend-ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:3px}
+
+/* case file */
+.case-head{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end;justify-content:space-between}
+.case-head h2{font-size:24px;line-height:1.2}
+.tag{display:inline-block;background:var(--surface-2);color:var(--accent-dark);font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;margin-left:6px;vertical-align:middle}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:#fff}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:14px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:10px 14px;cursor:pointer;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--accent-dark);border-bottom-color:var(--accent)}
+.panel{padding-top:16px}
+.panel[hidden]{display:none}
+
+.headline{font-size:19px;line-height:1.4;font-weight:600;background:var(--surface-2);border-left:5px solid var(--accent);border-radius:8px;padding:12px 14px}
+.headline b{color:var(--accent-dark)}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.tile{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.tile .v{font-size:22px;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums}
+.tile .l{font-size:12px;color:var(--muted);line-height:1.35}
+.sec{margin-top:22px}
+.sec h3{font-size:16px}
+.chart-box{position:relative;height:250px;margin-top:8px}
+.klegend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--ink-2);margin-top:6px}
+.klegend span{display:inline-flex;align-items:center;gap:6px}
+.klegend i{display:inline-block;width:18px;height:0;border-top:3px solid}
+.klegend i.box{width:12px;height:12px;border:0;border-radius:3px}
+.chain{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:6px;align-items:stretch;margin-top:10px}
+.chain .step{border-radius:10px;padding:10px 12px;border:1px solid var(--line);border-top:4px solid}
+.chain .step .v{font-size:20px;font-weight:800}
+.chain .step .l{font-size:12px;color:var(--muted);line-height:1.35}
+.chain .arrow{align-self:center;color:var(--muted);font-size:20px}
+.row-between{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 12px}
+label.check{font-size:13px;color:var(--ink-2);display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+label.check input{accent-color:var(--accent)}
+
+/* farmers */
+.cal{display:grid;grid-template-columns:repeat(6,1fr);gap:16px 12px;margin-top:12px}
+.mon-name{font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:4px}
+.weeks{display:flex;gap:3px}
+.wk{flex:1;height:36px;border-radius:5px;position:relative;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.wk.low{background:#bfe3c8;color:#1d5c36}.wk.mod{background:#f7cf73;color:#6b4a00}.wk.high{background:#dc4a33;color:#fff}
+.wk.flower::after{content:"";position:absolute;left:0;right:0;bottom:-7px;height:4px;border-radius:2px;background:var(--flower)}
+.cal-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;margin-top:16px;color:var(--ink-2)}
+.cal-legend span{display:inline-flex;align-items:center;gap:6px}
+.cal-legend .wk{flex:none;width:22px;height:18px;font-size:11px}
+.cal-legend .fl{width:22px;height:4px;border-radius:2px;background:var(--flower)}
+.note{background:#f5effb;border:1px solid #e2d4f3;border-radius:10px;padding:10px 12px;margin-top:14px;font-size:14px}
+.tips{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.tip{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface-2)}
+.tip .ic{font-size:26px;line-height:1}
+.tip h4{margin:6px 0 4px;font-size:15px}
+.tip p{font-size:14px;color:var(--ink-2)}
+[lang="my"]{line-height:1.9}
+
+/* tables */
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{font-size:12px;color:var(--muted);font-weight:700;background:var(--surface);position:sticky;top:0}
+.tbl-wrap{max-height:380px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:8px}
+.method{font-size:14px;color:var(--ink-2);padding-left:18px;margin:8px 0 0}
+.method li{margin-bottom:5px}
+code{background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:12.5px}
+.btn{border:0;background:var(--accent);color:#fff;font-weight:700;padding:9px 16px;border-radius:9px;cursor:pointer}
+.btn:hover{background:var(--accent-dark)}
+.btn.ghost{background:var(--surface);color:var(--accent-dark);border:1px solid var(--accent-soft)}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px}
+.flag40{color:var(--red);font-weight:700}
+
+footer{max-width:1320px;margin:0 auto;padding:6px 20px 28px;color:var(--muted);font-size:13px}
+footer a{color:var(--accent-dark)}
+:focus-visible{outline:3px solid #1b6fd1;outline-offset:2px}
+
+@media (max-width:980px){
+  main{grid-template-columns:minmax(0,1fr);padding:12px}
+  .map-card{position:static}
+  #map{height:340px}
+}
+@media (max-width:620px){
+  .top h1{font-size:20px}
+  .tiles{grid-template-columns:repeat(2,1fr)}
+  .cal{grid-template-columns:repeat(4,1fr)}
+  .tips{grid-template-columns:1fr}
+  .chain{grid-template-columns:1fr}
+  .chain .arrow{justify-self:center;transform:rotate(90deg)}
+  .headline{font-size:17px}
+  .case-head h2{font-size:21px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="titles">
+      <h1>HeatWatch Myanmar</h1>
+      <p>Detecting heat-wave trends with NASA data.</p>
+    </div>
+    <span class="badge" id="dataBadge">Sample data – will be replaced with NASA POWER data</span>
+  </div>
+</header>
+
+<main>
+  <!-- LEFT: map -->
+  <section class="card map-card" aria-label="Map of Myanmar regions">
+    <div id="map"></div>
+    <div class="map-ctl">
+      <div class="ctl-row">
+        <div class="seg" role="group" aria-label="Map colouring">
+          <button id="modeTrend" aria-pressed="true">Trend 1981–2025</button>
+          <button id="modeYear" aria-pressed="false">Single year</button>
+        </div>
+        <span class="sub" id="mapCaption"></span>
+      </div>
+      <div class="year-row">
+        <button class="icon-btn" id="playBtn" aria-label="Play through years" title="Play through years">▶</button>
+        <input type="range" id="yearSlider" min="1981" max="2025" step="1" value="2025" aria-label="Year">
+        <output id="yearOut" for="yearSlider">2025</output>
+      </div>
+      <div class="legend">
+        <div class="legend-bar"></div>
+        <div class="legend-ends"><span id="legMin"></span><span id="legMax"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT: case file -->
+  <section class="card pad" aria-label="Case file">
+    <div class="case-head">
+      <div>
+        <div class="eyebrow">Case File</div>
+        <h2><span id="regionName"></span><span class="tag" id="regionZone"></span></h2>
+        <div class="sub" id="regionMeta"></div>
+      </div>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Choose region"></div>
+
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-ov" aria-controls="panel-ov" aria-selected="true">Overview</button>
+      <button role="tab" id="tab-fa" aria-controls="panel-fa" aria-selected="false">For Farmers</button>
+      <button role="tab" id="tab-sc" aria-controls="panel-sc" aria-selected="false">For Scientists</button>
+    </div>
+
+    <!-- Overview -->
+    <div class="panel" id="panel-ov" role="tabpanel" aria-labelledby="tab-ov">
+      <p class="headline" id="headline"></p>
+      <div class="tiles" id="tiles"></div>
+
+      <div class="sec">
+        <h3>Heat-wave days per year</h3>
+        <p class="sub">Days inside a heat wave (3+ days in a row hotter than the local 90th percentile for that date).</p>
+        <div class="chart-box"><canvas id="barChart" role="img" aria-label="Bar chart of heat-wave days per year with Sen's slope trend line"></canvas></div>
+        <div class="klegend">
+          <span><i class="box" style="background:var(--accent-soft)"></i>Heat-wave days</span>
+          <span><i style="border-top:3px dashed var(--ink)"></i>Trend (Sen's slope)</span>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="row-between">
+          <h3>Earth-system chain: heat → dry soil → stressed vegetation</h3>
+          <label class="check"><input type="checkbox" id="smooth" checked> 5-year average</label>
+        </div>
+        <p class="sub">Hot season (Mar–May). Change between the first and the latest 10 years of each record:</p>
+        <div class="chain" id="chain"></div>
+        <div class="chart-box"><canvas id="chainChart" role="img" aria-label="Line chart of hot-season max temperature, root-zone soil moisture and NDVI anomalies"></canvas></div>
+        <div class="klegend">
+          <span><i style="border-color:var(--temp)"></i>Max temperature</span>
+          <span><i style="border-top:3px dashed var(--soil)"></i>Root-zone soil moisture</span>
+          <span><i style="border-top:3px dotted var(--veg)"></i>Vegetation greenness (NDVI, from 2000)</span>
+        </div>
+        <p class="sub" style="margin-top:6px">All three are shown as the difference from normal, in standard deviations, so they share one scale. Above 0 = higher than normal, below 0 = lower. Sample data – will be replaced with NASA POWER data.</p>
+      </div>
+    </div>
+
+    <!-- Farmers -->
+    <div class="panel" id="panel-fa" role="tabpanel" aria-labelledby="tab-fa" hidden>
+      <div class="row-between">
+        <h3 id="faTitle"></h3>
+        <div class="seg" role="group" aria-label="Language">
+          <button id="langEn" aria-pressed="true">English</button>
+          <button id="langMy" aria-pressed="false" lang="my">မြန်မာ</button>
+        </div>
+      </div>
+      <div id="faBody"></div>
+    </div>
+
+    <!-- Scientists -->
+    <div class="panel" id="panel-sc" role="tabpanel" aria-labelledby="tab-sc" hidden>
+      <h3>Method</h3>
+      <ul class="method">
+        <li><b>Data.</b> NASA POWER daily point API (<code>community=AG</code>): <code>T2M_MAX</code>, <code>T2M_MIN</code>, <code>RH2M</code>, <code>PRECTOTCORR</code>, <code>GWETROOT</code>, 1981–2025, at each region's coordinates. Vegetation: MODIS NDVI monthly means (record starts 2000). <b id="methodSample">This prototype currently runs on synthetic sample data with the same structure.</b></li>
+        <li><b>Threshold.</b> For each calendar day, the 90th percentile of <code>T2M_MAX</code> over the 1981–2010 baseline, pooled across a ±7-day window (15 days × 30 years).</li>
+        <li><b>Heat wave.</b> 3 or more consecutive days with <code>T2M_MAX</code> above that day's threshold. Days with <code>T2M_MAX</code> ≥ 40 °C are flagged separately as extreme-heat days.</li>
+        <li><b>Heat index.</b> NWS Rothfusz regression from <code>T2M_MAX</code> and afternoon humidity. RH2M is a daily mean, so humidity at the time of Tmax is estimated by holding vapour pressure constant between the daily mean temperature (<code>(T2M_MAX+T2M_MIN)/2</code>) and Tmax.</li>
+        <li><b>Trend.</b> Two-sided Mann-Kendall test (tie-corrected, no pre-whitening) on annual heat-wave days; magnitude from Sen's slope.</li>
+        <li><b>Earth-system chain.</b> Mar–May means, standardised against 1981–2010 (NDVI against 2000–2010).</li>
+        <li><b>Farmer calendar.</b> Uses an absolute threshold, not the percentile one: share of the last 30 years in which a week had 3 or more days with <code>T2M_MAX</code> ≥ 35 °C (the rice-flowering damage level). Low &lt; 20 %, medium 20–50 %, high ≥ 50 %. A percentile-based heat wave is equally likely in every season by construction, so it cannot rank weeks of the year.</li>
+      </ul>
+
+      <div class="sec">
+        <h3>Trend statistics</h3>
+        <div class="tbl-wrap" style="max-height:none"><table id="statTable"></table></div>
+      </div>
+
+      <div class="sec">
+        <div class="row-between">
+          <h3>Detected heat-wave events <span class="sub" id="evCount"></span></h3>
+          <div class="btn-row">
+            <button class="btn" id="csvEvents">Download CSV</button>
+            <button class="btn ghost" id="csvAnnual">Annual summary CSV</button>
+          </div>
+        </div>
+        <div class="tbl-wrap"><table id="evTable"></table></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p><b>Data credits.</b> Meteorology and soil moisture: <a href="https://power.larc.nasa.gov/" target="_blank" rel="noopener">NASA POWER</a> (Prediction Of Worldwide Energy Resources), NASA Langley Research Center. Vegetation: MODIS NDVI, NASA LP DAAC. Base map © OpenStreetMap contributors.</p>
+  <p id="footSample">Sample data – will be replaced with NASA POWER data. Numbers shown are illustrative, not observations.</p>
+  <p>Prototype for the NASA Space Apps Challenge, “Be an Earth System Trend Detective”.</p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+/* =====================================================================
+   1. CONFIG
+   To switch to real data: set useRealData = true and place, per region id,
+     data/<id>_power.json  – raw response of
+        https://power.larc.nasa.gov/api/temporal/daily/point
+          ?parameters=T2M_MAX,T2M_MIN,RH2M,PRECTOTCORR,GWETROOT&community=AG
+          &latitude=<lat>&longitude=<lon>&start=19810101&end=20251231&format=JSON
+     data/<id>_ndvi.json   – { "YYYYMM": ndvi, ... } monthly MODIS NDVI
+   Any region whose files are missing falls back to sample data.
+   ===================================================================== */
+const CONFIG = { useRealData:false, dataPath:'data/', startYear:1981, endYear:2025, baseline:[1981,2010] };
+
+const REGIONS = [
+  {id:'mandalay', name:'Mandalay', my:'မန္တလေး', zone:'Dry Zone', lat:21.97, lon:96.08, off:[22,-8], side:'right',
+   s:{base:29.5,hot:9.0,mons:3.5,warm:.27,sd:2.0,enso:1.0,rh:[45,35],dtr:[14,8],rain:7.3,soil:[.30,.42],ndvi:[.27,.33]}},
+  {id:'magway', name:'Magway', my:'မကွေး', zone:'Dry Zone · hottest', lat:20.15, lon:94.92, off:[0,0], side:'left',
+   s:{base:30.5,hot:9.2,mons:3.0,warm:.42,sd:2.0,enso:1.0,rh:[42,38],dtr:[14,8],rain:6.9,soil:[.28,.42],ndvi:[.24,.34]}},
+  {id:'sagaing', name:'Sagaing', my:'စစ်ကိုင်း', zone:'Dry Zone', lat:21.88, lon:95.98, off:[-22,8], side:'left',
+   s:{base:29.0,hot:9.0,mons:3.5,warm:.25,sd:2.0,enso:1.0,rh:[46,35],dtr:[14,8],rain:6.9,soil:[.30,.42],ndvi:[.28,.33]}},
+  {id:'yangon', name:'Yangon', my:'ရန်ကုန်', zone:'Humid coast', lat:16.84, lon:96.17, off:[0,0], side:'right',
+   s:{base:32.0,hot:5.0,mons:-1.5,warm:.15,sd:1.8,enso:.8,rh:[62,26],dtr:[12,6],rain:23,soil:[.42,.48],ndvi:[.42,.30]}},
+  {id:'pathein', name:'Pathein, Ayeyarwady', short:'Pathein', my:'ပုသိမ်', zone:'Delta · rice', lat:16.78, lon:94.73, off:[0,0], side:'left',
+   s:{base:31.5,hot:4.5,mons:-1.5,warm:.13,sd:1.8,enso:.8,rh:[65,25],dtr:[11,6],rain:25,soil:[.45,.47],ndvi:[.40,.36]}},
+  {id:'taunggyi', name:'Taunggyi, Shan', short:'Taunggyi', my:'တောင်ကြီး', zone:'Highland · cooler', lat:20.78, lon:97.04, off:[0,0], side:'right',
+   s:{base:22.5,hot:6.5,mons:2.0,warm:.06,sd:1.9,enso:.8,rh:[50,35],dtr:[14,7],rain:13,soil:[.40,.42],ndvi:[.48,.28]}}
+];
+const PARAMS = ['T2M_MAX','T2M_MIN','RH2M','PRECTOTCORR','GWETROOT'];
+const CUM = [0,31,59,90,120,151,181,212,243,273,304,334];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+// Typical rice flowering windows (day-of-year, 0-based). Confirm locally before use.
+const FLOWERING = { summer:[73,109] /* 15 Mar – 20 Apr */, monsoon:[262,297] /* 20 Sep – 25 Oct */ };
+const RICE_LIMIT = 35, EXTREME = 40;
+
+/* =====================================================================
+   2. HELPERS
+   ===================================================================== */
+const pad = n => String(n).padStart(2,'0');
+const fmtDate = s => `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+const signed = (v,d=1) => (v>=0?'+':'−')+Math.abs(v).toFixed(d);
+function mean(a){let s=0,n=0;for(const v of a)if(v!=null&&!isNaN(v)){s+=v;n++}return n?s/n:NaN}
+function sd(a){const m=mean(a);let s=0,n=0;for(const v of a)if(v!=null&&!isNaN(v)){s+=(v-m)**2;n++}return n>1?Math.sqrt(s/(n-1)):NaN}
+function quantile(sorted,q){if(!sorted.length)return NaN;const p=(sorted.length-1)*q,lo=Math.floor(p),hi=Math.ceil(p);return sorted[lo]+(sorted[hi]-sorted[lo])*(p-lo)}
+function median(a){return quantile([...a].sort((x,y)=>x-y),.5)}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function gaussian(rand){return ()=>Math.sqrt(-2*Math.log(1-rand()))*Math.cos(2*Math.PI*rand())}
+function calendar(dates){
+  const n=dates.length, yr=new Int16Array(n), mo=new Int8Array(n), doy=new Int16Array(n);
+  for(let i=0;i<n;i++){const s=dates[i], m=+s.slice(4,6), d=+s.slice(6,8);
+    yr[i]=+s.slice(0,4); mo[i]=m; doy[i]=CUM[m-1]+Math.min(d,m===2?28:31)-1;} // 29 Feb shares 28 Feb's slot
+  return {yr,mo,doy};
+}
+function movingAvg(a,w){const h=(w-1)/2;return a.map((v,i)=>v==null||isNaN(v)?NaN:mean(a.slice(Math.max(0,i-h),i+h+1)))}
+
+/* NWS heat index (Rothfusz regression), °C in / °C out */
+function heatIndexC(tC,rh){
+  if(isNaN(tC)||isNaN(rh))return NaN;
+  const T=tC*9/5+32;
+  let HI=.5*(T+61+(T-68)*1.2+rh*.094);
+  if((HI+T)/2>=80){
+    HI=-42.379+2.04901523*T+10.14333127*rh-.22475541*T*rh-6.83783e-3*T*T-5.481717e-2*rh*rh+1.22874e-3*T*T*rh+8.5282e-4*T*rh*rh-1.99e-6*T*T*rh*rh;
+    if(rh<13&&T>=80&&T<=112)HI-=((13-rh)/4)*Math.sqrt((17-Math.abs(T-95))/17);
+    else if(rh>85&&T>=80&&T<=87)HI+=((rh-85)/10)*((87-T)/5);
+  }
+  return (HI-32)*5/9;
+}
+
+/* RH2M is a daily mean. Estimate humidity at the time of Tmax by holding vapour pressure constant. */
+const satVp = t => 6.112*Math.exp(17.67*t/(t+243.5));
+function rhAtTmax(rhMean,tmax,tmin){return clamp(rhMean*satVp((tmax+tmin)/2)/satVp(tmax),1,100)}
+
+/* Mann-Kendall (two-sided, tie-corrected) and Sen's slope */
+function normCdf(z){const t=1/(1+.2316419*Math.abs(z)),d=.3989423*Math.exp(-z*z/2);
+  const p=d*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p}
+function mannKendall(x){
+  const n=x.length;let S=0;
+  for(let i=0;i<n-1;i++)for(let j=i+1;j<n;j++)S+=Math.sign(x[j]-x[i]);
+  const ties={};x.forEach(v=>ties[v]=(ties[v]||0)+1);
+  let tie=0;for(const k in ties){const t=ties[k];if(t>1)tie+=t*(t-1)*(2*t+5)}
+  const varS=(n*(n-1)*(2*n+5)-tie)/18;
+  const z=S>0?(S-1)/Math.sqrt(varS):S<0?(S+1)/Math.sqrt(varS):0;
+  return {S,z,p:2*(1-normCdf(Math.abs(z)))};
+}
+function senSlope(y){
+  const sl=[];for(let i=0;i<y.length-1;i++)for(let j=i+1;j<y.length;j++)sl.push((y[j]-y[i])/(j-i));
+  const slope=median(sl);return {slope,intercept:median(y.map((v,i)=>v-slope*i))};
+}
+
+/* =====================================================================
+   3. DATA LAYER
+   Internal shape (what analyse() consumes):
+     { isSample, dates:['YYYYMMDD',…], T2M_MAX:[], T2M_MIN:[], RH2M:[],
+       PRECTOTCORR:[], GWETROOT:[], ndvi:{ 'YYYYMM': value } }
+   ===================================================================== */
+function fromPower(power, ndvi){
+  const p=power.properties.parameter, dates=Object.keys(p.T2M_MAX).sort();
+  const out={isSample:false,dates,ndvi:ndvi||{}};
+  for(const k of PARAMS) out[k]=dates.map(d=>{const v=p[k]?p[k][d]:NaN;return v==null||v<=-999?NaN:v});
+  return out;
+}
+async function loadRegion(r){
+  if(CONFIG.useRealData){
+    try{
+      const get=u=>fetch(u).then(x=>{if(!x.ok)throw new Error(u+' '+x.status);return x.json()});
+      const power=await get(`${CONFIG.dataPath}${r.id}_power.json`);
+      const ndvi=await get(`${CONFIG.dataPath}${r.id}_ndvi.json`).catch(()=>null);
+      return fromPower(power,ndvi);
+    }catch(e){console.warn(`[HeatWatch] real data unavailable for ${r.id}; using sample data.`,e)}
+  }
+  return generateSample(r);
+}
+
+/* ---- Sample-data generator (deterministic, seeded) ---- */
+const monsoon = d => .5*(Math.tanh((d-140)/18)-Math.tanh((d-292)/18));   // 0 dry … 1 peak monsoon
+const hotSeason = d => Math.exp(-(((d-108)/38)**2));                       // peaks mid-April
+const EL_NINO = new Set([1983,1987,1991,1998,2005,2010,2016,2019,2023,2024]);
+const YEAR_ANOM = (()=>{const g=gaussian(mulberry32(1981)),o={};
+  for(let y=CONFIG.startYear;y<=CONFIG.endYear;y++)o[y]=.28*g()+(EL_NINO.has(y)?.55:0);return o})();
+function sampleDates(){
+  const out=[];
+  for(let t=Date.UTC(CONFIG.startYear,0,1),e=Date.UTC(CONFIG.endYear,11,31);t<=e;t+=864e5){
+    const d=new Date(t);out.push(`${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}`)}
+  return out;
+}
+function generateSample(r){
+  const s=r.s, seed=[...r.id].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7);
+  const rand=mulberry32(seed), g=gaussian(rand);
+  const dates=sampleDates(), {yr,mo,doy}=calendar(dates), n=dates.length;
+  const out={isSample:true,dates,ndvi:{}}; for(const k of PARAMS) out[k]=new Array(n);
+  const phi=.78, k=Math.sqrt(1-phi*phi)*s.sd, mid=(CONFIG.baseline[0]+CONFIG.baseline[1]+1)/2;
+  let anom=0, heatMem=0, soilNoise=0, acc={soil:0,dep:0,n:0};
+  for(let i=0;i<n;i++){
+    const d=doy[i], m=monsoon(d);
+    anom=phi*anom+k*g();
+    const trend=s.warm*(yr[i]+d/365-mid)/10*(1+.35*hotSeason(d));          // warming, strongest in the hot season
+    const dep=trend+YEAR_ANOM[yr[i]]*s.enso+anom;                          // departure from baseline climate
+    const tmax=s.base+s.hot*hotSeason(d)+s.mons*m+dep;
+    heatMem+=(dep-heatMem)/20; soilNoise=.95*soilNoise+.006*g();
+    const soilDev=-.022*heatMem+soilNoise;                                 // sustained heat dries the root zone
+    out.T2M_MAX[i]=+tmax.toFixed(2);
+    out.T2M_MIN[i]=+(tmax-(s.dtr[0]-(s.dtr[0]-s.dtr[1])*m)+.8*g()).toFixed(2);
+    out.RH2M[i]=+clamp(s.rh[0]+s.rh[1]*m-2.2*dep+4*g(),12,99).toFixed(1);
+    out.PRECTOTCORR[i]=rand()<(.06+.62*m)*(dep>1.5?.5:1)?+(-Math.log(1-rand())*s.rain).toFixed(1):0;
+    out.GWETROOT[i]=+clamp(s.soil[0]+s.soil[1]*monsoon(d-25)+soilDev,.05,.98).toFixed(3);
+    acc.soil+=soilDev; acc.dep+=dep; acc.n++;
+    if(i===n-1||mo[i+1]!==mo[i]){                                          // month end → monthly NDVI (MODIS era only)
+      if(yr[i]>2000||(yr[i]===2000&&mo[i]>=2)){
+        const v=s.ndvi[0]+s.ndvi[1]*monsoon(CUM[mo[i]-1]+15-40)+.9*acc.soil/acc.n-.006*acc.dep/acc.n+.012*g();
+        out.ndvi[`${yr[i]}${pad(mo[i])}`]=+clamp(v,.05,.95).toFixed(3);
+      }
+      acc={soil:0,dep:0,n:0};
+    }
+  }
+  return out;
+}
+
+/* =====================================================================
+   4. ANALYSIS
+   ===================================================================== */
+function analyse(d){
+  const n=d.dates.length, {yr,mo,doy}=calendar(d.dates), tx=d.T2M_MAX;
+  const y0=yr[0], y1=yr[n-1], ny=y1-y0+1, years=Array.from({length:ny},(_,i)=>y0+i);
+  const [b0,b1]=CONFIG.baseline;
+
+  // calendar-day 90th percentile, ±7-day pooled window, baseline years only
+  const buckets=Array.from({length:365},()=>[]);
+  for(let i=0;i<n;i++)if(yr[i]>=b0&&yr[i]<=b1&&!isNaN(tx[i]))buckets[doy[i]].push(tx[i]);
+  const thr=new Float32Array(365);
+  for(let c=0;c<365;c++){const pool=[];for(let w=-7;w<=7;w++)pool.push(...buckets[(c+w+365)%365]);
+    pool.sort((a,b)=>a-b);thr[c]=quantile(pool,.9)}
+
+  const hi=new Float32Array(n); for(let i=0;i<n;i++)hi[i]=heatIndexC(tx[i],rhAtTmax(d.RH2M[i],tx[i],d.T2M_MIN[i]));
+
+  // events: runs of ≥3 consecutive exceedance days
+  const hw=new Uint8Array(n), events=[];
+  for(let i=0,s=-1;i<=n;i++){
+    if(i<n&&tx[i]>thr[doy[i]]){if(s<0)s=i;continue}
+    if(s>=0){
+      if(i-s>=3){let peak=-99,peakHI=-99,d40=0;
+        for(let j=s;j<i;j++){hw[j]=1;peak=Math.max(peak,tx[j]);if(hi[j]>peakHI)peakHI=hi[j];if(tx[j]>=EXTREME)d40++}
+        events.push({start:d.dates[s],end:d.dates[i-1],duration:i-s,peak,peakHI,d40})}
+      s=-1;
+    }
+  }
+
+  // annual series
+  const A={hwDays:new Array(ny).fill(0),d40:new Array(ny).fill(0),hiMax:new Array(ny).fill(NaN),
+           tmaxHot:[],soilHot:[],ndviHot:[]};
+  const hot=years.map(()=>({t:[],s:[]}));
+  const fl={summer:new Array(ny).fill(0),monsoon:new Array(ny).fill(0)};
+  for(let i=0;i<n;i++){const y=yr[i]-y0;
+    A.hwDays[y]+=hw[i]; if(tx[i]>=EXTREME)A.d40[y]++;
+    if(!(hi[i]<=A.hiMax[y]))A.hiMax[y]=isNaN(hi[i])?A.hiMax[y]:hi[i];
+    if(mo[i]>=3&&mo[i]<=5){hot[y].t.push(tx[i]);hot[y].s.push(d.GWETROOT[i])}
+    if(tx[i]>RICE_LIMIT)for(const k in FLOWERING)if(doy[i]>=FLOWERING[k][0]&&doy[i]<=FLOWERING[k][1])fl[k][y]++;
+  }
+  years.forEach((y,i)=>{A.tmaxHot[i]=mean(hot[i].t);A.soilHot[i]=mean(hot[i].s);
+    A.ndviHot[i]=mean([3,4,5].map(m=>d.ndvi[`${y}${pad(m)}`]))});
+
+  // standardised anomalies (σ) for the chain chart
+  const z=(arr,from,to)=>{const b=arr.filter((_,i)=>years[i]>=from&&years[i]<=to),m=mean(b),s=sd(b);return arr.map(v=>(v-m)/s)};
+  const Z={t:z(A.tmaxHot,b0,b1),s:z(A.soilHot,b0,b1),v:z(A.ndviHot,2000,b1)};
+
+  // trend
+  const mk=mannKendall(A.hwDays), sen=senSlope(A.hwDays);
+  const span=(arr,from,to)=>mean(arr.filter((_,i)=>years[i]>=from&&years[i]<=to));
+  const firstValid=arr=>years[arr.findIndex(v=>!isNaN(v))];
+  const ndvi0=firstValid(A.ndviHot);
+
+  // weekly risk calendar: share of the last 30 years in which the week had ≥3 days at or above 35 °C
+  const r0=Math.max(y0,y1-29), hotDays=Array.from({length:52},()=>({}));
+  for(let i=0;i<n;i++)if(tx[i]>=RICE_LIMIT&&yr[i]>=r0){const w=hotDays[Math.min(51,Math.floor(doy[i]/7))];w[yr[i]]=(w[yr[i]]||0)+1}
+  const weekRisk=hotDays.map(w=>Object.values(w).filter(c=>c>=3).length/(y1-r0+1));
+
+  let hottest=0;for(let i=1;i<n;i++)if(tx[i]>tx[hottest])hottest=i;
+  return {years,y0,y1,events,A,Z,mk,sen,weekRisk,riskFrom:r0,
+    slopeDecade:sen.slope*10,
+    dec80:span(A.hwDays,1980,1989), dec20:span(A.hwDays,2020,2029),
+    d40Then:span(A.d40,y0,y0+9), d40Now:span(A.d40,y1-9,y1),
+    hiPeak:Math.max(...A.hiMax.filter(v=>!isNaN(v))),
+    hottest:{date:d.dates[hottest],t:tx[hottest]},
+    chain:{ dT:span(A.tmaxHot,y1-9,y1)-span(A.tmaxHot,y0,y0+9),
+            dSoil:(span(A.soilHot,y1-9,y1)/span(A.soilHot,y0,y0+9)-1)*100,
+            dNdvi:(span(A.ndviHot,y1-9,y1)/span(A.ndviHot,ndvi0,ndvi0+9)-1)*100, ndvi0 },
+    flower:{ summer:[span(fl.summer,y0,y0+9),span(fl.summer,y1-9,y1)],
+             monsoon:[span(fl.monsoon,y0,y0+9),span(fl.monsoon,y1-9,y1)] }};
+}
+
+/* =====================================================================
+   5. UI STATE + RENDERING
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const state = { region:'magway', mode:'trend', year:CONFIG.endYear, lang:'en', tab:'ov', smooth:true };
+const DATA = {}, RES = {};
+let map, markers={}, barChart, chainChart, yearScaleMax=1, trendScaleMax=1, timer=null;
+
+const STOPS=[[46,158,91],[242,182,50],[215,48,31]];
+function scaleColor(t){t=clamp(t,0,1)*2;const i=Math.min(1,Math.floor(t)),f=t-i,a=STOPS[i],b=STOPS[i+1];
+  const c=a.map((v,k)=>Math.round(v+(b[k]-v)*f));
+  return {css:`rgb(${c})`,text:(.299*c[0]+.587*c[1]+.114*c[2])>150?'#2b1a12':'#fff'}}
+function regionValue(id){const r=RES[id];
+  return state.mode==='trend'
+    ? {v:r.slopeDecade,t:r.slopeDecade/trendScaleMax,label:signed(r.slopeDecade,0)}
+    : {v:r.A.hwDays[state.year-r.y0],t:r.A.hwDays[state.year-r.y0]/yearScaleMax,label:String(r.A.hwDays[state.year-r.y0])}}
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+function renderMap(){
+  for(const r of REGIONS){
+    const val=regionValue(r.id), c=scaleColor(val.t);
+    if(map){
+      const icon=L.divIcon({className:'mk-wrap',iconSize:[36,36],iconAnchor:[18-r.off[0],18-r.off[1]],
+        html:`<div class="mk ${r.id===state.region?'sel':''}" style="background:${c.css};color:${c.text}">${val.label}</div><div class="mk-lab ${r.side}">${r.short||r.name}</div>`});
+      if(!markers[r.id]){
+        markers[r.id]=L.marker([r.lat,r.lon],{icon,keyboard:true,title:r.name,alt:r.name}).addTo(map).on('click',()=>selectRegion(r.id));
+      } else markers[r.id].setIcon(icon);
+      markers[r.id].setZIndexOffset(r.id===state.region?1000:0);
+    }
+    const chip=document.querySelector(`.chip[data-id="${r.id}"]`);
+    if(chip){chip.setAttribute('aria-pressed',r.id===state.region);chip.querySelector('i').style.background=c.css}
+  }
+  const trend=state.mode==='trend';
+  $('modeTrend').setAttribute('aria-pressed',trend); $('modeYear').setAttribute('aria-pressed',!trend);
+  $('mapCaption').textContent=trend?'Change in heat-wave days per decade':`Heat-wave days in ${state.year}`;
+  $('legMin').textContent=trend?'0 (no increase)':'0 days';
+  $('legMax').textContent=trend?`+${trendScaleMax.toFixed(0)} days / decade`:`${yearScaleMax.toFixed(0)}+ days`;
+  $('yearOut').textContent=state.year; $('yearSlider').value=state.year;
+}
+
+function renderOverview(){
+  const reg=REGIONS.find(r=>r.id===state.region), r=RES[reg.id], nm=reg.short||reg.name;
+  $('regionName').textContent=reg.name; $('regionZone').textContent=reg.zone;
+  $('regionMeta').textContent=`${reg.lat.toFixed(2)}°N, ${reg.lon.toFixed(2)}°E · ${r.y0}–${r.y1}`;
+
+  const a=Math.round(r.dec80), b=Math.round(r.dec20), sig=r.mk.p<.05, pTxt=r.mk.p<.001?'p < 0.001':`p = ${r.mk.p.toFixed(3)}`;
+  $('headline').innerHTML = sig
+    ? `Heat-wave days in ${nm} ${r.sen.slope>0?'rose':'fell'} from <b>${a}/year</b> (1980s) to <b>${b}/year</b> (2020s) – statistically significant (Mann-Kendall, ${pTxt}).`
+    : `Heat-wave days in ${nm} went from <b>${a}/year</b> (1980s) to <b>${b}/year</b> (2020s) – this change is not statistically significant (Mann-Kendall, ${pTxt}).`;
+
+  $('tiles').innerHTML=[
+    [signed(r.slopeDecade,1),'heat-wave days per decade (Sen\'s slope)'],
+    [`${r.d40Then.toFixed(0)} → ${r.d40Now.toFixed(0)}`,`days ≥ 40 °C per year, ${r.y0}–${String(r.y0+9).slice(2)} vs ${r.y1-9}–${String(r.y1).slice(2)}`],
+    [`${r.hottest.t.toFixed(1)} °C`,`hottest day (${fmtDate(r.hottest.date)})`],
+    [`${r.hiPeak.toFixed(0)} °C`,'highest heat index (feels-like temperature)']
+  ].map(([v,l])=>`<div class="tile"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+
+  const c=r.chain;
+  $('chain').innerHTML=[
+    ['var(--temp)','Hotter air',`${signed(c.dT,1)} °C`,`hot-season max temperature (vs ${r.y0}–${String(r.y0+9).slice(2)})`],
+    ['var(--soil)','Drier soil',`${signed(c.dSoil,0)} %`,`root-zone soil moisture (vs ${r.y0}–${String(r.y0+9).slice(2)})`],
+    ['var(--veg)','Stressed vegetation',`${signed(c.dNdvi,0)} %`,`NDVI greenness (vs ${c.ndvi0}–${String(c.ndvi0+9).slice(2)})`]
+  ].map(([col,t,v,l])=>`<div class="step" style="border-top-color:${col}"><div class="l"><b>${t}</b></div><div class="v">${v}</div><div class="l">${l}</div></div>`)
+   .join('<div class="arrow" aria-hidden="true">→</div>');
+
+  if(!window.Chart)return;
+  const light=css('--accent-soft'), dark=css('--accent-dark');
+  barChart.data.labels=r.years;
+  barChart.data.datasets[0].data=r.A.hwDays;
+  barChart.data.datasets[0].backgroundColor=r.years.map(y=>state.mode==='year'&&y===state.year?dark:light);
+  barChart.data.datasets[1].data=r.years.map((_,i)=>Math.max(0,r.sen.intercept+r.sen.slope*i));
+  barChart.update();
+
+  const f=a=>(state.smooth?movingAvg(a,5):a).map(v=>isNaN(v)?null:+v.toFixed(2));
+  chainChart.data.labels=r.years;
+  [r.Z.t,r.Z.s,r.Z.v].forEach((zs,i)=>chainChart.data.datasets[i].data=f(zs));
+  chainChart.$raw=[r.A.tmaxHot.map(v=>v.toFixed(1)+' °C'),r.A.soilHot.map(v=>(v*100).toFixed(0)+' % saturation'),r.A.ndviHot.map(v=>isNaN(v)?'':'NDVI '+v.toFixed(2))];
+  chainChart.update();
+}
+
+/* ---- Farmers ---- */
+const I18N={
+  en:{title:'Heat risk calendar for your crops',
+    calSub:(n,a,b)=>`Each box is one week. Colour shows how often that week had 3 or more days above 35 °C in the last ${n} years (${a}–${b}).`,
+    months:MONTHS, low:'Low risk',mod:'Medium risk',high:'High risk',flower:'Rice flowering time',
+    note:'<b>Why flowering matters:</b> temperatures above about 35 °C while rice is flowering stop grains from forming and cut yields. Try to keep flowering out of the red weeks.',
+    tblTitle:'Days above 35 °C during flowering (average per year)',
+    summer:'Summer rice flowering (mid-Mar to mid-Apr)', monsoon:'Monsoon rice flowering (late Sep to late Oct)',
+    perYear:'days', tipsTitle:'What you can do',
+    tips:[['📅','Shift your planting date','Sow 2–3 weeks earlier or later so that flowering misses the red weeks.'],
+          ['💧','Irrigate in the hottest weeks','Keep water standing in the field during red weeks. Water cools the crop and protects the soil.'],
+          ['🌾','Choose heat-tolerant varieties','Ask your township agriculture office for heat-tolerant or short-duration rice seed.']],
+    cell:(range,p)=>`${range}: 3+ days above 35 °C in ${p}% of years`,
+    sample:'Sample data – will be replaced with NASA POWER data. Flowering dates are typical values; check locally.'},
+  my:{title:'သီးနှံများအတွက် အပူဒဏ် အန္တရာယ် ပြက္ခဒိန်',
+    calSub:(n,a,b)=>`အကွက်တစ်ကွက်သည် တစ်ပတ် ဖြစ်သည်။ ပြီးခဲ့သော ${n} နှစ် (${a}–${b}) အတွင်း ထိုအပတ်၌ ၃၅ °C ကျော်သော ရက် ၃ ရက်နှင့်အထက် မည်မျှ မကြာခဏ ဖြစ်ခဲ့သည်ကို အရောင်ဖြင့် ပြထားသည်။`,
+    months:['ဇန်','ဖေ','မတ်','ဧပြီ','မေ','ဇွန်','ဇူ','ဩ','စက်','အောက်','နို','ဒီ'],
+    low:'အန္တရာယ် နည်း',mod:'အန္တရာယ် အလယ်အလတ်',high:'အန္တရာယ် မြင့်',flower:'စပါးပန်းပွင့်ချိန်',
+    note:'<b>ပန်းပွင့်ချိန် အဘယ်ကြောင့် အရေးကြီးသနည်း။</b> စပါးပန်းပွင့်ချိန်တွင် အပူချိန် ၃၅ °C ခန့်ထက် ကျော်လွန်ပါက အစေ့မအောင်ဘဲ အထွက်နှုန်း ကျဆင်းသည်။ ပန်းပွင့်ချိန်ကို အနီရောင်အပတ်များနှင့် မတိုက်ဆိုင်စေရန် ကြိုးစားပါ။',
+    tblTitle:'ပန်းပွင့်ချိန်အတွင်း ၃၅ °C ကျော်သော ရက်များ (တစ်နှစ် ပျမ်းမျှ)',
+    summer:'နွေစပါး ပန်းပွင့်ချိန် (မတ်လလယ် – ဧပြီလလယ်)', monsoon:'မိုးစပါး ပန်းပွင့်ချိန် (စက်တင်ဘာလကုန် – အောက်တိုဘာလကုန်)',
+    perYear:'ရက်', tipsTitle:'သင် လုပ်ဆောင်နိုင်သည်များ',
+    tips:[['📅','စိုက်ပျိုးရက် ရွှေ့ပါ','ပန်းပွင့်ချိန်သည် အနီရောင်အပတ်များနှင့် မတိုက်ဆိုင်စေရန် ၂ ပတ်မှ ၃ ပတ်ခန့် စော၍ (သို့) နောက်ကျ၍ စိုက်ပျိုးပါ။'],
+          ['💧','အပူဆုံးအပတ်များတွင် ရေသွင်းပါ','အနီရောင်အပတ်များအတွင်း လယ်ကွင်းထဲတွင် ရေထိန်းထားပါ။ ရေသည် အပင်ကို အေးစေပြီး မြေဆီလွှာကို ကာကွယ်ပေးသည်။'],
+          ['🌾','အပူဒဏ်ခံနိုင်သော မျိုးများ ရွေးပါ','အပူဒဏ်ခံနိုင်သော (သို့) သက်တမ်းတို စပါးမျိုးစေ့များအကြောင်း မြို့နယ် စိုက်ပျိုးရေးရုံးတွင် မေးမြန်းပါ။']],
+    cell:(range,p)=>`${range}: နှစ်များ၏ ${p}% တွင် ၃၅ °C ကျော်သော ရက် ၃ ရက်နှင့်အထက် ရှိခဲ့သည်`,
+    sample:'နမူနာ ဒေတာ – NASA POWER ဒေတာဖြင့် အစားထိုးမည်။ ပန်းပွင့်ချိန်များသည် ပုံမှန်တန်ဖိုးများသာ ဖြစ်သည်။ ဒေသအလိုက် စစ်ဆေးပါ။'}
+};
+const riskClass = p => p>=.5?'high':p>=.2?'mod':'low';
+const inFlower = w => Object.values(FLOWERING).some(([a,b])=>w*7<=b&&(w===51?364:w*7+6)>=a);
+function doyLabel(d,months){let m=11;while(CUM[m]>d)m--;return `${d-CUM[m]+1} ${months[m]}`}
+
+function renderFarmers(){
+  const t=I18N[state.lang], reg=REGIONS.find(r=>r.id===state.region), r=RES[reg.id];
+  const panel=$('panel-fa'); panel.lang=state.lang;
+  $('langEn').setAttribute('aria-pressed',state.lang==='en'); $('langMy').setAttribute('aria-pressed',state.lang==='my');
+  $('faTitle').textContent=`${t.title} – ${state.lang==='my'?reg.my:(reg.short||reg.name)}`;
+
+  const byMonth=Array.from({length:12},()=>[]);
+  r.weekRisk.forEach((p,w)=>{let m=11;while(CUM[m]>w*7+3)m--;byMonth[m].push({p,w})});
+  const sym={low:'',mod:'•',high:'!'};
+  const cal=byMonth.map((wks,m)=>`<div><div class="mon-name">${t.months[m]}</div><div class="weeks">${wks.map(({p,w})=>{
+      const k=riskClass(p), range=`${doyLabel(w*7,t.months)} – ${doyLabel(w===51?364:w*7+6,t.months)}`;
+      const tip=t.cell(range,Math.round(p*100))+(inFlower(w)?` · ${t.flower}`:'');
+      return `<div class="wk ${k} ${inFlower(w)?'flower':''}" title="${tip}" aria-label="${tip}" role="img">${sym[k]}</div>`}).join('')}</div></div>`).join('');
+
+  const row=k=>`<tr><td>${t[k]}</td><td>${r.flower[k][0].toFixed(0)} ${t.perYear}</td><td><b>${r.flower[k][1].toFixed(0)} ${t.perYear}</b></td></tr>`;
+  $('faBody').innerHTML=`
+    <p class="sub" style="margin-top:6px">${t.calSub(r.y1-r.riskFrom+1,r.riskFrom,r.y1)}</p>
+    <div class="cal">${cal}</div>
+    <div class="cal-legend">
+      <span><span class="wk low"></span>${t.low}</span><span><span class="wk mod">•</span>${t.mod}</span>
+      <span><span class="wk high">!</span>${t.high}</span><span><span class="fl"></span>${t.flower}</span>
+    </div>
+    <div class="note">${t.note}</div>
+    <div class="sec"><h3>${t.tblTitle}</h3>
+      <div class="tbl-wrap" style="max-height:none;overflow-x:auto"><table style="white-space:normal">
+        <tr><th></th><th>${r.y0}–${r.y0+9}</th><th>${r.y1-9}–${r.y1}</th></tr>${row('summer')}${row('monsoon')}</table></div></div>
+    <div class="sec"><h3>${t.tipsTitle}</h3>
+      <div class="tips">${t.tips.map(([ic,h,p])=>`<div class="tip"><div class="ic" aria-hidden="true">${ic}</div><h4>${h}</h4><p>${p}</p></div>`).join('')}</div></div>
+    <p class="sub" style="margin-top:14px">${DATA[reg.id].isSample?t.sample:''}</p>
+    ${state.lang==='my'?'<p class="sub" lang="en">Burmese text is a draft translation and should be reviewed by a native speaker before field use.</p>':''}`;
+}
+
+/* ---- Scientists ---- */
+function renderScientists(){
+  const reg=REGIONS.find(r=>r.id===state.region), r=RES[reg.id];
+  const longest=r.events.reduce((a,e)=>e.duration>a.duration?e:a,{duration:0});
+  $('methodSample').hidden=!DATA[reg.id].isSample;
+  $('statTable').innerHTML=`<tr><th>Statistic (annual heat-wave days, ${r.y0}–${r.y1})</th><th>Value</th></tr>`+[
+    ['Years (n)',r.years.length],['Mann-Kendall S',r.mk.S],['Mann-Kendall Z',r.mk.z.toFixed(2)],
+    ['p-value (two-sided)',r.mk.p<.001?'< 0.001':r.mk.p.toFixed(3)],
+    ["Sen's slope",`${signed(r.sen.slope,2)} days/yr (${signed(r.slopeDecade,1)} per decade)`],
+    ['Mean heat-wave days, 1980s → 2020s',`${r.dec80.toFixed(1)} → ${r.dec20.toFixed(1)}`],
+    ['Events detected',r.events.length],
+    ['Longest event',longest.duration?`${longest.duration} days (from ${fmtDate(longest.start)})`:'–'],
+    ['Days ≥ 40 °C (whole record)',r.A.d40.reduce((a,b)=>a+b,0)]
+  ].map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+  $('evCount').textContent=`(${r.events.length}, newest first)`;
+  $('evTable').innerHTML='<tr><th>Start</th><th>End</th><th>Duration (days)</th><th>Peak Tmax (°C)</th><th>Peak heat index (°C)</th><th>Days ≥ 40 °C</th></tr>'+
+    [...r.events].reverse().map(e=>`<tr><td>${fmtDate(e.start)}</td><td>${fmtDate(e.end)}</td><td>${e.duration}</td><td>${e.peak.toFixed(1)}</td><td>${e.peakHI.toFixed(1)}</td><td class="${e.d40?'flag40':''}">${e.d40}</td></tr>`).join('');
+}
+function download(name,rows){
+  const csv=rows.map(r=>r.map(v=>/[",\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function csvEvents(){
+  const reg=REGIONS.find(r=>r.id===state.region), r=RES[reg.id], src=DATA[reg.id].isSample?'SAMPLE':'NASA_POWER';
+  download(`heatwatch_${reg.id}_heatwave_events_${src}.csv`,
+    [['region','lat','lon','start','end','duration_days','peak_tmax_c','peak_heat_index_c','days_ge_40c','data_source'],
+     ...r.events.map(e=>[reg.name,reg.lat,reg.lon,fmtDate(e.start),fmtDate(e.end),e.duration,e.peak.toFixed(2),e.peakHI.toFixed(2),e.d40,src])]);
+}
+function csvAnnual(){
+  const reg=REGIONS.find(r=>r.id===state.region), r=RES[reg.id], src=DATA[reg.id].isSample?'SAMPLE':'NASA_POWER';
+  const f=(v,d)=>isNaN(v)?'':v.toFixed(d);
+  download(`heatwatch_${reg.id}_annual_${src}.csv`,
+    [['region','year','heatwave_days','days_ge_40c','max_heat_index_c','mam_tmax_c','mam_gwetroot','mam_ndvi','data_source'],
+     ...r.years.map((y,i)=>[reg.name,y,r.A.hwDays[i],r.A.d40[i],f(r.A.hiMax[i],1),f(r.A.tmaxHot[i],2),f(r.A.soilHot[i],3),f(r.A.ndviHot[i],3),src])]);
+}
+
+/* ---- wiring ---- */
+function renderAll(){renderMap();renderOverview();renderFarmers();renderScientists()}
+function selectRegion(id){state.region=id;renderAll()}
+function setYear(y){state.year=y;state.mode='year';renderMap();renderOverview()}
+function setTab(t){state.tab=t;
+  for(const k of ['ov','fa','sc']){$('tab-'+k).setAttribute('aria-selected',k===t);$('panel-'+k).hidden=k!==t}
+  if(t==='ov'&&window.Chart){barChart.resize();chainChart.resize()}}
+function stopPlay(){clearInterval(timer);timer=null;$('playBtn').textContent='▶'}
+
+function initCharts(){
+  if(!window.Chart)return;
+  Chart.defaults.font.family=getComputedStyle(document.body).fontFamily;
+  Chart.defaults.color=css('--muted');
+  const grid={color:css('--line')}, ink=css('--ink');
+  const xTicks={maxRotation:0,autoSkip:true,callback(v){const y=this.getLabelForValue(v);return y%5===0?y:''}};
+  barChart=new Chart($('barChart'),{data:{labels:[],datasets:[
+      {type:'bar',label:'Heat-wave days',data:[],borderRadius:{topLeft:4,topRight:4},order:2},
+      {type:'line',label:"Trend (Sen's slope)",data:[],borderColor:ink,borderWidth:2,borderDash:[6,4],pointRadius:0,pointHitRadius:0,order:1}]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      onClick:(e,els)=>{if(els.length){stopPlay();setYear(barChart.data.labels[els[0].index])}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${(+c.parsed.y).toFixed(c.datasetIndex?1:0)} days`}}},
+      scales:{x:{grid:{display:false},ticks:xTicks},y:{beginAtZero:true,grid,title:{display:true,text:'Days per year'}}}}});
+  const line=(label,color,dash)=>({label,data:[],borderColor:color,backgroundColor:color,borderWidth:2,borderDash:dash,pointRadius:0,pointHoverRadius:4,tension:.25,spanGaps:false});
+  chainChart=new Chart($('chainChart'),{type:'line',data:{labels:[],datasets:[
+      line('Max temperature',css('--temp'),[]),line('Root-zone soil moisture',css('--soil'),[7,4]),line('NDVI',css('--veg'),[2,3])]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const raw=chainChart.$raw[c.datasetIndex][c.dataIndex];
+        return `${c.dataset.label}: ${signed(c.parsed.y,1)} σ${state.smooth?' (5-yr avg)':''} · ${raw}`}}}},
+      scales:{x:{grid:{display:false},ticks:xTicks},
+        y:{grid:{color:c=>c.tick.value===0?css('--muted'):css('--line')},title:{display:true,text:'Difference from normal (σ)'}}}}});
+}
+
+async function init(){
+  for(const r of REGIONS){DATA[r.id]=await loadRegion(r);RES[r.id]=analyse(DATA[r.id])}
+  const anySample=REGIONS.some(r=>DATA[r.id].isSample);
+  $('dataBadge').textContent=anySample?'Sample data – will be replaced with NASA POWER data':'NASA POWER data';
+  $('footSample').hidden=!anySample;
+
+  const all=REGIONS.flatMap(r=>RES[r.id].A.hwDays).sort((a,b)=>a-b);
+  yearScaleMax=Math.max(1,Math.round(quantile(all,.97)));
+  trendScaleMax=Math.max(1,Math.ceil(Math.max(...REGIONS.map(r=>RES[r.id].slopeDecade))));
+  const any=RES[REGIONS[0].id]; $('yearSlider').min=any.y0; $('yearSlider').max=any.y1; state.year=any.y1;
+  $('modeTrend').textContent=`Trend ${any.y0}–${any.y1}`;
+
+  $('chips').innerHTML=REGIONS.map(r=>`<button class="chip" data-id="${r.id}" aria-pressed="false"><i></i>${r.short||r.name}</button>`).join('');
+  $('chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(b)selectRegion(b.dataset.id)});
+
+  if(window.L){
+    map=L.map('map',{scrollWheelZoom:false,zoomSnap:.25}).setView([19.4,96.0],6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:10,minZoom:5,attribution:'© OpenStreetMap contributors'}).addTo(map);
+    const bounds=[[15.9,93.6],[22.9,98.2]]; let moved=false;
+    map.fitBounds(bounds); map.on('dragstart zoomstart',e=>{if(e.originalEvent||e.type==='dragstart')moved=true});
+    new ResizeObserver(()=>{map.invalidateSize();if(!moved)map.fitBounds(bounds,{animate:false})}).observe($('map'));
+  } else $('map').innerHTML='<p class="pad sub">Map library could not be loaded. Use the region buttons instead.</p>';
+  initCharts();
+
+  $('modeTrend').onclick=()=>{stopPlay();state.mode='trend';renderMap();renderOverview()};
+  $('modeYear').onclick=()=>setYear(state.year);
+  $('yearSlider').oninput=e=>{stopPlay();setYear(+e.target.value)};
+  $('playBtn').onclick=()=>{
+    if(timer)return stopPlay();
+    $('playBtn').textContent='❚❚'; if(state.year>=any.y1)state.year=any.y0-1;
+    timer=setInterval(()=>{if(state.year>=any.y1)return stopPlay();setYear(state.year+1)},320)};
+  for(const k of ['ov','fa','sc'])$('tab-'+k).onclick=()=>setTab(k);
+  $('langEn').onclick=()=>{state.lang='en';renderFarmers()};
+  $('langMy').onclick=()=>{state.lang='my';renderFarmers()};
+  $('smooth').onchange=e=>{state.smooth=e.target.checked;renderOverview()};
+  $('csvEvents').onclick=csvEvents; $('csvAnnual').onclick=csvAnnual;
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>

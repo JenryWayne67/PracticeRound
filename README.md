@@ -1,3 +1,17 @@
+# HeatWatch Myanmar
+
+Climate-trend web app built on NASA POWER and GRACE data: analysis for scientists (`/science`), a 12-month
+outlook and crop planner for farmers (`/farmers`, English and Burmese) and a knowledge hub with plain-language
+findings, open data and community field notes (`/knowledge`).
+
+- Source data lives in `data/HeatWatch_full_data/` (daily station CSVs, monthly regional CSVs, GRACE).
+- `node scripts/build-data.mjs` converts it to the JSON in `frontend/src/heatwatch/data/`. Re-run after changing the CSVs.
+- All analysis runs in the browser: `frontend/src/heatwatch/engine.ts`. Places, indicators, crops and periods are plain tables at the top of that file.
+- The dataset has a step change in 2008, so trends default to 2008-2025. See the data-quality panel on the scientists page.
+- Community notes use the API in `backend/app/routers/notes.py` (public read, login to post).
+
+Built on the starter described below.
+
 # Hackathon Starter
 
 Full-stack starter: **React + Vite + TypeScript + Tailwind** frontend, **FastAPI + SQLite** backend,

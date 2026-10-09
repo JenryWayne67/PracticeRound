@@ -71,3 +71,35 @@ class ItemRead(ItemBase):
     id: int
     owner_id: int
     created_at: datetime
+
+
+# --- Notes (knowledge hub: field observations and practices shared publicly) ---
+
+
+class NoteCreate(SQLModel):
+    title: str = Field(min_length=3, max_length=120)
+    body: str = Field(min_length=10, max_length=2000)
+    category: str = Field(default="general", max_length=20)
+    place: str = Field(default="", max_length=60)
+
+
+class Note(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    title: str
+    body: str
+    category: str = Field(default="general", index=True)
+    place: str = ""
+    author_id: int = Field(foreign_key="user.id", index=True)
+    author_name: str = ""
+    created_at: datetime = Field(default_factory=now)
+
+
+class NoteRead(SQLModel):
+    id: int
+    title: str
+    body: str
+    category: str
+    place: str
+    author_id: int
+    author_name: str
+    created_at: datetime

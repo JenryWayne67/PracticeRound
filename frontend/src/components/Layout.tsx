@@ -2,12 +2,14 @@ import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Button } from './ui'
 
-const APP_NAME = 'Hackathon App'
+const APP_NAME = 'HeatWatch Myanmar'
 
 // Add a page: create it in src/pages, add a <Route> in App.tsx, add a link here.
 const links = [
-  { to: '/', label: 'Home' },
-  { to: '/items', label: 'Items' },
+  { to: '/', label: 'Overview' },
+  { to: '/science', label: 'Scientists' },
+  { to: '/farmers', label: 'Farmers' },
+  { to: '/knowledge', label: 'Knowledge hub' },
   { to: '/chat', label: 'AI Chat' },
 ]
 
@@ -15,8 +17,8 @@ export function Layout() {
   const { user, logout } = useAuth()
   return (
     <div className="min-h-screen">
-      <header className="border-b border-slate-200 bg-white">
-        <nav className="mx-auto flex max-w-4xl flex-wrap items-center gap-1 px-4 py-3">
+      <header className="border-b border-orange-200 bg-white">
+        <nav className="mx-auto flex max-w-7xl flex-wrap items-center gap-1 px-4 py-3">
           <span className="mr-4 font-bold text-brand">{APP_NAME}</span>
           {links.map((link) => (
             <NavLink
@@ -45,9 +47,13 @@ export function Layout() {
           </div>
         </nav>
       </header>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-5">
         <Outlet />
       </main>
+      <footer className="mx-auto max-w-7xl px-4 pb-8 text-sm text-stone-500">
+        Data: NASA POWER (MERRA-2 based), NASA Langley Research Center · GRACE / GRACE-FO total water storage, NASA JPL · Map © OpenStreetMap
+        contributors. Prototype for the NASA Space Apps Challenge, “Be an Earth System Trend Detective”.
+      </footer>
     </div>
   )
 }

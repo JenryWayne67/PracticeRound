@@ -14,6 +14,9 @@ export default defineConfig({
     proxy: {
       '/api': { target: backend, changeOrigin: true, ws: true },
       '/uploads': { target: backend, changeOrigin: true },
+      // FastAPI's interactive API docs, linked from the knowledge hub.
+      '/docs': { target: backend, changeOrigin: true },
+      '/openapi.json': { target: backend, changeOrigin: true },
     },
   },
 })

@@ -34,6 +34,15 @@ def test_full_flow():
         assert client.delete(f"/api/items/{item_id}", headers=headers).status_code == 204
         assert client.get(f"/api/items/{item_id}", headers=headers).status_code == 404
 
+        assert client.get("/api/notes").json() == []
+        note = {"title": "Mulching sesame", "body": "Straw mulch kept seedlings alive through a dry week.", "category": "drought", "place": "Magway"}
+        assert client.post("/api/notes", json=note).status_code == 401
+        r = client.post("/api/notes", json=note, headers=headers)
+        assert r.status_code == 201 and r.json()["author_name"] == "Test", r.text
+        assert len(client.get("/api/notes?category=drought").json()) == 1
+        assert client.get("/api/notes?category=heat").json() == []
+        assert client.delete(f"/api/notes/{r.json()['id']}", headers=headers).status_code == 204
+
         with client.websocket_connect("/api/ws/room1") as ws:
             ws.send_json({"hello": "world"})
             assert ws.receive_json() == {"hello": "world"}

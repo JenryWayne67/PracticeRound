@@ -2,10 +2,54 @@
 
 /* Rebrand in one place: change these and every bg-brand / text-brand follows. */
 @theme {
-  --color-brand: #4f46e5;
-  --color-brand-dark: #4338ca;
+  --color-brand: #d9480f;
+  --color-brand-dark: #a4320a;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-[#fff7ef] text-stone-900 antialiased;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Myanmar', 'Myanmar Text', sans-serif;
+}
+
+/* Leaflet map markers (built as HTML strings in heatwatch/widgets.tsx) */
+.hw-mk-wrap {
+  background: none;
+  border: 0;
+}
+.hw-mk {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+.hw-mk.sel {
+  outline: 3px solid #2b1a12;
+  outline-offset: 2px;
+}
+.hw-mk-lab {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2b1a12;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 1px 7px;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+.hw-mk-lab.right {
+  left: 44px;
+}
+.hw-mk-lab.left {
+  right: 44px;
 }
