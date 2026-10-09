@@ -2,7 +2,7 @@ import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Button } from './ui'
 
-const APP_NAME = 'HeatWatch Myanmar'
+const APP_NAME = 'InevitableCges'
 
 // Add a page: create it in src/pages, add a <Route> in App.tsx, add a link here.
 const links = [

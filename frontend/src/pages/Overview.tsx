@@ -36,7 +36,7 @@ function Inner({ d }: { d: HeatwatchData }) {
   return (
     <div className="space-y-4">
       <header className="rounded-2xl bg-gradient-to-r from-[#8f2a08] via-brand to-[#f08c2e] p-5 text-white sm:p-7">
-        <h1 className="text-2xl font-extrabold sm:text-3xl">HeatWatch Myanmar</h1>
+        <h1 className="text-2xl font-extrabold sm:text-3xl">InevitableCges</h1>
         <p className="mt-1 max-w-2xl text-white/95">
           Detecting climate trends with NASA data: analysis for scientists, outlooks and recommendations for farmers, and shared knowledge for
           everyone.

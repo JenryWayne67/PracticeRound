@@ -170,7 +170,7 @@ export function BreakNote({ compact = false }: { compact?: boolean }) {
       humidity and soil moisture jump up, maximum temperature drops).{' '}
       {compact
         ? 'Trends are therefore calculated for 2008–2025 by default.'
-        : 'That is a change in the data product, not in the climate, so trends that cross it are not real. HeatWatch detects the break with a Pettitt test and calculates trends for 2008–2025 by default. Rainfall amounts are also lower than rain-gauge totals, so read them as relative, not absolute.'}
+        : 'That is a change in the data product, not in the climate, so trends that cross it are not real. InevitableCges detects the break with a Pettitt test and calculates trends for 2008–2025 by default. Rainfall amounts are also lower than rain-gauge totals, so read them as relative, not absolute.'}
     </div>
   )
 }

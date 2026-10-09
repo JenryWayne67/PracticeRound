@@ -1,4 +1,4 @@
-# HeatWatch Myanmar
+# InevitableCges
 
 Climate-trend web app built on NASA POWER and GRACE data: analysis for scientists (`/science`), a 12-month
 outlook and crop planner for farmers (`/farmers`, English and Burmese) and a knowledge hub with plain-language

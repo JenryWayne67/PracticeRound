@@ -34,7 +34,7 @@ function Inner({ d }: { d: HeatwatchData }) {
   const all = useMemo(() => findings(d.an.recent), [d])
   const shown = all.filter((f) => cat === 'all' || f.cat === cat)
   const copy = (key: string, text: string) =>
-    navigator.clipboard?.writeText(`${text} — HeatWatch Myanmar, NASA POWER / GRACE data`).then(() => {
+    navigator.clipboard?.writeText(`${text} — InevitableCges, NASA POWER / GRACE data`).then(() => {
       setCopied(key)
       setTimeout(() => setCopied(''), 1500)
     })
@@ -101,7 +101,7 @@ function Inner({ d }: { d: HeatwatchData }) {
           </dl>
         </Panel>
         <Panel title="Open data and methods">
-          <p className="text-sm text-stone-700">Everything shown in HeatWatch can be downloaded and reused. Methods are listed at the bottom of the scientists page.</p>
+          <p className="text-sm text-stone-700">Everything shown in InevitableCges can be downloaded and reused. Methods are listed at the bottom of the scientists page.</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button onClick={exportAll} className="rounded-lg bg-brand px-3 py-1.5 text-sm font-bold text-white">Annual indicators, all places (CSV)</button>
             <a href="/docs" target="_blank" rel="noopener" className="rounded-lg border border-brand px-3 py-1.5 text-sm font-bold text-brand-dark">API documentation</a>
