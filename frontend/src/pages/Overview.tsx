@@ -6,9 +6,9 @@ import type { CatId } from '../heatwatch/engine'
 import { BreakNote, CategoryChips, MapView, Panel, Select, TrendLegend, trendStyle } from '../heatwatch/widgets'
 
 const AUDIENCES = [
-  { to: '/science', icon: '🔬', title: 'For scientists', text: 'Trend tests, change-point detection, events and downloads for every indicator.' },
-  { to: '/farmers', icon: '🌾', title: 'For farmers', text: '12-month outlook and a crop planner with recommendations, in English and မြန်မာ.' },
-  { to: '/knowledge', icon: '🌍', title: 'Knowledge hub', text: 'Plain-language findings, open data and field notes shared by the community.' },
+  { to: '/science', icon: '01', title: 'For scientists', text: 'Trend tests, change-point detection, events and downloads for every indicator.' },
+  { to: '/farmers', icon: '02', title: 'For farmers', text: '12-month outlook and a crop planner with recommendations, in English and မြန်မာ.' },
+  { to: '/knowledge', icon: '03', title: 'Knowledge hub', text: 'Plain-language findings, open data and field notes shared by the community.' },
 ]
 
 export default function Overview() {
@@ -35,8 +35,9 @@ function Inner({ d }: { d: HeatwatchData }) {
 
   return (
     <div className="space-y-4">
-      <header className="rounded-2xl bg-gradient-to-r from-[#8f2a08] via-brand to-[#f08c2e] p-5 text-white sm:p-7">
-        <h1 className="text-2xl font-extrabold sm:text-3xl">InevitableCges</h1>
+      <header className="rounded-2xl bg-gradient-to-r from-[#0b1433] via-[#132a6b] to-[#1b3f9c] border border-line p-5 text-white sm:p-7">
+        <p className="font-mono text-xs uppercase tracking-[0.25em] text-brand-light">Earth System Trend Detective · NASA Space Apps</p>
+        <h1 className="mt-1 text-2xl font-bold sm:text-4xl">InevitableCges</h1>
         <p className="mt-1 max-w-2xl text-white/95">
           Detecting climate trends with NASA data: analysis for scientists, outlooks and recommendations for farmers, and shared knowledge for
           everyone.
@@ -52,7 +53,7 @@ function Inner({ d }: { d: HeatwatchData }) {
         <Panel>
           <MapView markers={markers} selected={placeId} onSelect={setPlaceId} />
           <p className="mt-3 text-sm font-semibold">
-            {ind.label}: change per decade, 2008–2025 <span className="font-normal text-stone-500">({ind.unit})</span>
+            {ind.label}: change per decade, 2008–2025 <span className="font-normal text-muted">({ind.unit})</span>
           </p>
           <div className="mt-2">
             <TrendLegend />
@@ -65,7 +66,7 @@ function Inner({ d }: { d: HeatwatchData }) {
             <div className="mt-3">
               <Select label="Indicator" value={indId} onChange={setIndId} options={inds.map((i) => ({ id: i.id, label: i.label }))} />
             </div>
-            <p className="mt-2 text-sm text-stone-600">{ind.desc}</p>
+            <p className="mt-2 text-sm text-muted">{ind.desc}</p>
           </Panel>
 
           <Panel
@@ -76,7 +77,7 @@ function Inner({ d }: { d: HeatwatchData }) {
                 <Link to="/science" className="rounded-lg bg-brand px-3 py-1.5 text-white">
                   Analyse
                 </Link>
-                <Link to="/farmers" className="rounded-lg border border-brand px-3 py-1.5 text-brand-dark">
+                <Link to="/farmers" className="rounded-lg border border-brand px-3 py-1.5 text-brand-light">
                   Farmer outlook
                 </Link>
               </div>
@@ -85,7 +86,7 @@ function Inner({ d }: { d: HeatwatchData }) {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-stone-500">
+                  <tr className="text-left text-xs text-muted">
                     <th className="py-1 pr-2 font-semibold">Indicator</th>
                     <th className="px-2 text-right font-semibold">2008–2025 average</th>
                     <th className="pl-2 text-right font-semibold">Change per decade</th>
@@ -98,7 +99,7 @@ function Inner({ d }: { d: HeatwatchData }) {
                     return (
                       <tr
                         key={i.id}
-                        className={`cursor-pointer border-t border-orange-100 ${i.id === indId ? 'bg-orange-50' : ''}`}
+                        className={`cursor-pointer border-t border-line/60 ${i.id === indId ? 'bg-panel-2' : ''}`}
                         onClick={() => setIndId(i.id)}
                       >
                         <td className="py-1.5 pr-2">{i.label}</td>
@@ -124,13 +125,15 @@ function Inner({ d }: { d: HeatwatchData }) {
               <ul className="space-y-2 text-sm">
                 {top.map((f) => (
                   <li key={f.placeId + f.indicatorId} className="flex gap-2">
-                    <span aria-hidden>{f.harmful === true ? '🔺' : f.harmful === false ? '🟢' : '🔹'}</span>
+                    <span aria-hidden className={f.harmful === true ? 'text-red-400' : f.harmful === false ? 'text-emerald-400' : 'text-brand-light'}>
+                      {f.harmful === true ? '▲' : f.harmful === false ? '●' : '◆'}
+                    </span>
                     <span>{f.text}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-stone-600">
+              <p className="text-sm text-muted">
                 No statistically significant trend in this category over 2008–2025. Eighteen years is a short record, so only strong signals show up.
               </p>
             )}
@@ -140,12 +143,12 @@ function Inner({ d }: { d: HeatwatchData }) {
 
       <div className="grid gap-4 sm:grid-cols-3">
         {AUDIENCES.map((a) => (
-          <Link key={a.to} to={a.to} className="rounded-2xl border border-orange-200 bg-white p-5 shadow-sm transition hover:border-brand">
-            <div className="text-3xl" aria-hidden>
+          <Link key={a.to} to={a.to} className="rounded-2xl border border-line bg-panel p-5 shadow-lg shadow-black/20 transition hover:border-brand">
+            <div className="font-mono text-sm tracking-widest text-brand-light" aria-hidden>
               {a.icon}
             </div>
             <h2 className="mt-2 text-lg font-bold">{a.title}</h2>
-            <p className="mt-1 text-sm text-stone-600">{a.text}</p>
+            <p className="mt-1 text-sm text-muted">{a.text}</p>
           </Link>
         ))}
       </div>

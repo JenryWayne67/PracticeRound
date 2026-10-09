@@ -2,13 +2,54 @@
 
 /* Rebrand in one place: change these and every bg-brand / text-brand follows. */
 @theme {
-  --color-brand: #d9480f;
-  --color-brand-dark: #a4320a;
+  --color-brand: #3b7cff;
+  --color-brand-dark: #2a63d9;
+  --color-brand-light: #8db4ff;
+  --color-space: #060a16;
+  --color-panel: #0f172e;
+  --color-panel-2: #162042;
+  --color-panel-3: #1e2a52;
+  --color-line: #27345c;
+  --color-ink: #e8edf7;
+  --color-soft: #c3cde3;
+  --color-muted: #8d9bbd;
+  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
 }
 
 body {
-  @apply bg-[#fff7ef] text-stone-900 antialiased;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Myanmar', 'Myanmar Text', sans-serif;
+  @apply text-ink antialiased;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Myanmar', 'Myanmar Text', sans-serif;
+  background-color: var(--color-space);
+  /* quiet starfield + a faint glow, fixed behind the content */
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, #ffffffb0 50%, transparent 51%),
+    radial-gradient(1px 1px at 78% 32%, #ffffff90 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 41% 67%, #ffffff80 50%, transparent 51%),
+    radial-gradient(1px 1px at 63% 84%, #ffffffa0 50%, transparent 51%),
+    radial-gradient(1px 1px at 91% 58%, #ffffff70 50%, transparent 51%),
+    radial-gradient(1px 1px at 27% 43%, #ffffff60 50%, transparent 51%),
+    radial-gradient(900px 500px at 85% -10%, #1b3f9c40, transparent 70%);
+  background-size: 420px 420px, 520px 520px, 610px 610px, 470px 470px, 560px 560px, 380px 380px, 100% 100%;
+  background-attachment: fixed;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+select,
+input,
+textarea {
+  color-scheme: dark;
+}
+/* OpenStreetMap tiles recoloured to a dark basemap (no API key needed) */
+.hw-dark-tiles {
+  filter: invert(1) hue-rotate(195deg) saturate(0.45) brightness(0.85) contrast(0.95);
+}
+.leaflet-container {
+  background: #0b1020;
+  font-family: inherit;
 }
 
 /* Leaflet map markers (built as HTML strings in heatwatch/widgets.tsx) */
@@ -25,12 +66,12 @@ body {
   justify-content: center;
   font-weight: 700;
   font-size: 12px;
-  border: 2px solid #fff;
+  border: 2px solid #e8edf7;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
   cursor: pointer;
 }
 .hw-mk.sel {
-  outline: 3px solid #2b1a12;
+  outline: 3px solid #8db4ff;
   outline-offset: 2px;
 }
 .hw-mk-lab {
@@ -40,8 +81,9 @@ body {
   white-space: nowrap;
   font-size: 12px;
   font-weight: 700;
-  color: #2b1a12;
-  background: rgba(255, 255, 255, 0.9);
+  color: #e8edf7;
+  background: rgba(10, 16, 36, 0.9);
+  border: 1px solid #27345c;
   padding: 1px 7px;
   border-radius: 10px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);

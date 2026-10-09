@@ -40,12 +40,12 @@ export default function Chat() {
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">AI Chat</h1>
       <Card className="min-h-64 space-y-3">
-        {messages.length === 0 && <p className="text-slate-500">Ask anything to get started.</p>}
+        {messages.length === 0 && <p className="text-muted">Ask anything to get started.</p>}
         {messages.map((message, index) => (
           <div key={index} className={message.role === 'user' ? 'text-right' : ''}>
             <span
               className={`inline-block max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2 text-left text-sm ${
-                message.role === 'user' ? 'bg-brand text-white' : 'bg-slate-100'
+                message.role === 'user' ? 'bg-brand text-white' : 'bg-panel-2'
               }`}
             >
               {message.content || '…'}

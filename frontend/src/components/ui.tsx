@@ -8,8 +8,8 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primar
 export function Button({ variant = 'primary', className, ...props }: ButtonProps) {
   const styles = {
     primary: 'bg-brand text-white hover:bg-brand-dark',
-    ghost: 'text-slate-700 hover:bg-slate-200',
-    danger: 'text-red-600 hover:bg-red-50',
+    ghost: 'text-soft hover:bg-panel-3',
+    danger: 'text-red-400 hover:bg-red-500/10',
   }[variant]
   return (
     <button
@@ -27,7 +27,7 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return (
     <input
       className={cx(
-        'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20',
+        'w-full rounded-lg border border-line bg-panel px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20',
         className,
       )}
       {...props}
@@ -36,9 +36,9 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
 }
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cx('rounded-xl border border-slate-200 bg-white p-5 shadow-sm', className)} {...props} />
+  return <div className={cx('rounded-xl border border-line bg-panel p-5 shadow-lg shadow-black/20', className)} {...props} />
 }
 
 export function ErrorText({ children }: { children?: string | null }) {
-  return children ? <p className="text-sm text-red-600">{children}</p> : null
+  return children ? <p className="text-sm text-red-400">{children}</p> : null
 }

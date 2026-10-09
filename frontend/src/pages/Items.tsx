@@ -54,16 +54,16 @@ export default function Items() {
       </form>
       <ErrorText>{error}</ErrorText>
       {items === null ? (
-        <p className="text-slate-500">Loading…</p>
+        <p className="text-muted">Loading…</p>
       ) : items.length === 0 ? (
-        <p className="text-slate-500">Nothing here yet.</p>
+        <p className="text-muted">Nothing here yet.</p>
       ) : (
         <ul className="space-y-2">
           {items.map((item) => (
             <li key={item.id}>
               <Card className="flex items-center gap-3 py-3">
                 <input type="checkbox" checked={item.done} onChange={() => toggle(item)} className="size-4" />
-                <span className={`flex-1 ${item.done ? 'text-slate-400 line-through' : ''}`}>{item.title}</span>
+                <span className={`flex-1 ${item.done ? 'text-muted line-through' : ''}`}>{item.title}</span>
                 <Button variant="danger" onClick={() => remove(item)}>
                   Delete
                 </Button>

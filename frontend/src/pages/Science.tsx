@@ -39,7 +39,7 @@ function Inner({ d }: { d: HeatwatchData }) {
     const vals = nn(a.series[indId])
     const asLine = LINE_INDICATORS.includes(indId)
     const fit = stat ? a.years.map((y) => +(stat.intercept + stat.slope * (y - stat.firstYear)).toFixed(3)) : []
-    const tint = a.years.map((y) => (y < BREAK_YEAR ? '#d6d3d1' : COLORS.bar))
+    const tint = a.years.map((y) => (y < BREAK_YEAR ? COLORS.preBreak : COLORS.bar))
     return cfg({
       data: {
         labels: a.years,
@@ -111,7 +111,7 @@ function Inner({ d }: { d: HeatwatchData }) {
       data: {
         labels: g.months,
         datasets: [
-          { label: 'Monthly anomaly', data: g.raw, borderColor: '#b9d8c6', borderWidth: 1.5, pointRadius: 0, spanGaps: false },
+          { label: 'Monthly anomaly', data: g.raw, borderColor: '#2f6f5a', borderWidth: 1.5, pointRadius: 0, spanGaps: false },
           { label: 'Seasonal cycle removed', data: nn(g.anom), borderColor: COLORS.water, borderWidth: 2, pointRadius: 0, spanGaps: false },
         ],
       },
@@ -159,15 +159,15 @@ function Inner({ d }: { d: HeatwatchData }) {
         <div className="mt-3">
           <Select label="Indicator" value={indId} onChange={setIndId} options={inds.map((i) => ({ id: i.id, label: i.label }))} />
         </div>
-        <p className="mt-2 text-sm text-stone-600">{ind.desc}</p>
+        <p className="mt-2 text-sm text-muted">{ind.desc}</p>
         {period === 'full' && <div className="mt-3"><BreakNote /></div>}
       </Panel>
 
       <Panel title={`${ind.label} · ${p.name}`} sub={`${PERIODS[period].label}${period === 'full' ? ' · grey = before the 2008 data break' : ''}`}>
         {!available ? (
-          <p className="text-sm text-stone-600">This indicator needs daily data, and only monthly regional data is available for {p.name}. Choose another place or indicator.</p>
+          <p className="text-sm text-muted">This indicator needs daily data, and only monthly regional data is available for {p.name}. Choose another place or indicator.</p>
         ) : !stat ? (
-          <p className="text-sm text-stone-600">Not enough years of data for this indicator in this period.</p>
+          <p className="text-sm text-muted">Not enough years of data for this indicator in this period.</p>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -187,7 +187,7 @@ function Inner({ d }: { d: HeatwatchData }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-xs text-stone-500">
+              <tr className="text-xs text-muted">
                 <th className="py-1 pr-2 text-left font-semibold">Place</th>
                 {inds.map((i) => (
                   <th key={i.id} className="px-1 text-center font-semibold">{i.label}</th>
@@ -196,7 +196,7 @@ function Inner({ d }: { d: HeatwatchData }) {
             </thead>
             <tbody>
               {PLACES.map((pl) => (
-                <tr key={pl.id} className="border-t border-orange-100">
+                <tr key={pl.id} className="border-t border-line/60">
                   <td className="whitespace-nowrap py-1.5 pr-2 font-medium">{pl.name}</td>
                   {inds.map((i) => {
                     const st = trendStyle(hasIndicator(pl, i) ? d.an[period][pl.id].stats[i.id] : null)
@@ -205,7 +205,7 @@ function Inner({ d }: { d: HeatwatchData }) {
                       <td key={i.id} className="px-1 py-1 text-center">
                         <button
                           onClick={() => { setPlaceId(pl.id); setIndId(i.id) }}
-                          className={`min-w-14 rounded-md px-2 py-1 text-xs font-bold tabular-nums ${on ? 'outline outline-2 outline-offset-1 outline-stone-900' : ''}`}
+                          className={`min-w-14 rounded-md px-2 py-1 text-xs font-bold tabular-nums ${on ? 'outline outline-2 outline-offset-1 outline-ink' : ''}`}
                           style={{ background: st.fill, color: st.text }}
                         >
                           {st.label}
@@ -234,7 +234,7 @@ function Inner({ d }: { d: HeatwatchData }) {
 
       <Panel title={`Linked Earth system · ${p.name}`} sub="Annual temperature, rainfall, soil moisture and total water storage, each as its difference from the period mean in standard deviations, so they share one scale.">
         <ChartBox config={system} label="Standardised annual anomalies of temperature, rainfall, soil moisture and water storage" />
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-stone-600">
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
           {[['Temperature', COLORS.temp, 'solid'], ['Rainfall', COLORS.rain, 'dashed'], ['Soil moisture', COLORS.soil, 'dotted'], ['Water storage (GRACE, from 2002)', COLORS.water, 'dashed']].map(([t, c, s]) => (
             <span key={t} className="inline-flex items-center gap-1.5">
               <i className="inline-block w-5" style={{ borderTop: `3px ${s} ${c}` }} />
@@ -246,8 +246,8 @@ function Inner({ d }: { d: HeatwatchData }) {
 
       <Panel title={`Total water storage · ${p.region}`} sub="JPL GRACE / GRACE-FO mascons, monthly, April 2002 – July 2026. The gap in 2017–2018 is the time between the two missions. Independent of the 2008 reanalysis break.">
         <ChartBox config={grace} height={220} label="GRACE total water storage anomaly by month" />
-        <div className="mt-2 flex flex-wrap gap-x-4 text-sm text-stone-600">
-          <span className="inline-flex items-center gap-1.5"><i className="inline-block w-5" style={{ borderTop: '3px solid #b9d8c6' }} />Monthly anomaly</span>
+        <div className="mt-2 flex flex-wrap gap-x-4 text-sm text-muted">
+          <span className="inline-flex items-center gap-1.5"><i className="inline-block w-5" style={{ borderTop: '3px solid #2f6f5a' }} />Monthly anomaly</span>
           <span className="inline-flex items-center gap-1.5"><i className="inline-block w-5" style={{ borderTop: `3px solid ${COLORS.water}` }} />Seasonal cycle removed</span>
         </div>
       </Panel>
@@ -258,17 +258,17 @@ function Inner({ d }: { d: HeatwatchData }) {
         right={
           <div className="flex flex-wrap gap-2">
             <button onClick={exportEvents} className="rounded-lg bg-brand px-3 py-1.5 text-sm font-bold text-white">Download CSV</button>
-            <button onClick={exportAnnual} className="rounded-lg border border-brand px-3 py-1.5 text-sm font-bold text-brand-dark">All annual indicators CSV</button>
+            <button onClick={exportAnnual} className="rounded-lg border border-brand px-3 py-1.5 text-sm font-bold text-brand-light">All annual indicators CSV</button>
           </div>
         }
       >
         <Seg label="Event type" value={evType} onChange={setEvType} options={[{ id: 'heat', label: `Heat waves (${events.heat.length})` }, { id: 'dry', label: `Dry spells ≥ 10 days (${events.dry.length})` }, { id: 'wet', label: 'Wettest days' }]} />
         {!p.daily ? (
-          <p className="mt-3 text-sm text-stone-600">Event detection needs daily data, which is not available for {p.name}.</p>
+          <p className="mt-3 text-sm text-muted">Event detection needs daily data, which is not available for {p.name}.</p>
         ) : (
-          <div className="mt-3 max-h-80 overflow-auto rounded-xl border border-orange-200">
+          <div className="mt-3 max-h-80 overflow-auto rounded-xl border border-line">
             <table className="w-full text-sm tabular-nums">
-              <thead className="sticky top-0 bg-white text-xs text-stone-500">
+              <thead className="sticky top-0 bg-panel text-xs text-muted">
                 {evType === 'heat' ? (
                   <tr><th className="p-2 text-left">Start</th><th className="p-2 text-left">End</th><th className="p-2 text-right">Days</th><th className="p-2 text-right">Peak Tmax °C</th><th className="p-2 text-right">Peak heat index °C</th></tr>
                 ) : evType === 'dry' ? (
@@ -279,13 +279,13 @@ function Inner({ d }: { d: HeatwatchData }) {
               </thead>
               <tbody>
                 {evType === 'heat' && [...events.heat].reverse().map((e) => (
-                  <tr key={e.start} className="border-t border-orange-100"><td className="p-2">{e.start}</td><td className="p-2">{e.end}</td><td className="p-2 text-right">{e.days}</td><td className="p-2 text-right">{e.peak.toFixed(1)}</td><td className="p-2 text-right">{e.peakHI.toFixed(1)}</td></tr>
+                  <tr key={e.start} className="border-t border-line/60"><td className="p-2">{e.start}</td><td className="p-2">{e.end}</td><td className="p-2 text-right">{e.days}</td><td className="p-2 text-right">{e.peak.toFixed(1)}</td><td className="p-2 text-right">{e.peakHI.toFixed(1)}</td></tr>
                 ))}
                 {evType === 'dry' && [...events.dry].reverse().map((e) => (
-                  <tr key={e.start} className="border-t border-orange-100"><td className="p-2">{e.start}</td><td className="p-2">{e.end}</td><td className="p-2 text-right">{e.days}</td></tr>
+                  <tr key={e.start} className="border-t border-line/60"><td className="p-2">{e.start}</td><td className="p-2">{e.end}</td><td className="p-2 text-right">{e.days}</td></tr>
                 ))}
                 {evType === 'wet' && events.wet.map((e) => (
-                  <tr key={e.date} className="border-t border-orange-100"><td className="p-2">{e.date}</td><td className="p-2 text-right">{e.mm.toFixed(1)}</td></tr>
+                  <tr key={e.date} className="border-t border-line/60"><td className="p-2">{e.date}</td><td className="p-2 text-right">{e.mm.toFixed(1)}</td></tr>
                 ))}
               </tbody>
             </table>
@@ -296,7 +296,7 @@ function Inner({ d }: { d: HeatwatchData }) {
       <Panel title="Data-quality check: the 2008 break" sub="Averages before and after 2008 on the full record, with the Pettitt change-point test on annual rainfall. A simultaneous jump at every place points to the data product, not the climate.">
         <div className="overflow-x-auto">
           <table className="w-full text-sm tabular-nums">
-            <thead className="text-xs text-stone-500">
+            <thead className="text-xs text-muted">
               <tr>
                 <th className="p-2 text-left">Place</th>
                 <th className="p-2 text-right">Rain mm/yr, 1981–2007 → 2008–2025</th>
@@ -307,7 +307,7 @@ function Inner({ d }: { d: HeatwatchData }) {
             </thead>
             <tbody>
               {quality.map((q) => (
-                <tr key={q.pl.id} className="border-t border-orange-100">
+                <tr key={q.pl.id} className="border-t border-line/60">
                   <td className="p-2 font-medium">{q.pl.name}</td>
                   <td className="p-2 text-right">{q.rain[0].toFixed(0)} → {q.rain[1].toFixed(0)} ({(q.rain[1] / q.rain[0]).toFixed(1)}×)</td>
                   <td className="p-2 text-right">{q.peak[0].toFixed(1)} → {q.peak[1].toFixed(1)}</td>
@@ -318,11 +318,11 @@ function Inner({ d }: { d: HeatwatchData }) {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-sm text-stone-600">Sittwe (Rakhine Coast) shows a second jump in 2015, so its rainfall trend is unreliable even after 2008. Before publishing any rainfall result, compare against rain gauges or a satellite product such as GPM IMERG or CHIRPS.</p>
+        <p className="mt-2 text-sm text-muted">Sittwe (Rakhine Coast) shows a second jump in 2015, so its rainfall trend is unreliable even after 2008. Before publishing any rainfall result, compare against rain gauges or a satellite product such as GPM IMERG or CHIRPS.</p>
       </Panel>
 
       <Panel title="Method">
-        <ul className="list-disc space-y-1.5 pl-5 text-sm text-stone-700">
+        <ul className="list-disc space-y-1.5 pl-5 text-sm text-soft">
           <li><b>Data.</b> NASA POWER (MERRA-2 based) daily point series for six stations: T2M_MAX, T2M_MIN, RH2M, PRECTOTCORR, GWETROOT, 1981–2025. NASA POWER monthly series for six regions. JPL GRACE / GRACE-FO mascon total water storage, 2002–2026. Hakha and Sittwe have monthly data only; the three Dry Zone stations share the Central Dry Zone water-storage series.</li>
           <li><b>Heat wave.</b> 3+ consecutive days with Tmax above the calendar-day 90th percentile (±7-day window) and at least 35 °C. Percentiles use 1981–2010 for the full record and 2008–2025 for the consistent period.</li>
           <li><b>Heat index.</b> NWS Rothfusz regression. RH2M is a daily mean, so humidity at the time of Tmax is estimated by holding vapour pressure constant.</li>

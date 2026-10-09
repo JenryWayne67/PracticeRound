@@ -45,7 +45,7 @@ export default function Login() {
         </Button>
       </form>
       <button
-        className="mt-4 text-sm text-brand hover:underline"
+        className="mt-4 text-sm text-brand-light hover:underline"
         onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
       >
         {mode === 'login' ? 'Need an account? Sign up' : 'Have an account? Log in'}

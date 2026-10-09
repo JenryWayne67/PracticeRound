@@ -64,7 +64,7 @@ export function useHeatwatch() {
 /** Renders children only once the data is loaded. */
 export function DataGate({ children }: { children: (data: HeatwatchData) => ReactNode }) {
   const { data, error } = useHeatwatch()
-  if (error) return <p className="text-red-700">Could not load the dataset: {error}</p>
-  if (!data) return <p className="text-stone-500">Loading 45 years of NASA data…</p>
+  if (error) return <p className="text-red-400">Could not load the dataset: {error}</p>
+  if (!data) return <p className="text-muted">Loading 45 years of NASA data…</p>
   return <>{children(data)}</>
 }
